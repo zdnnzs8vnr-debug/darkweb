@@ -1,0 +1,786 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#04040a" />
+<meta name="description" content="GUSTAVOEURO — Portale riservato. Operativi dal 2022. Banconote Euro e trasferimenti PayPal." />
+<title>GUSTAVOEURO // NODE_2022</title>
+<link rel="icon" href="assets/logo.png" />
+<link rel="apple-touch-icon" href="assets/logo.png" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@300;400;500;700&display=swap" rel="stylesheet" />
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config={theme:{extend:{
+  colors:{bg:'#04040a',fg:'#eceaf5',surface:'#0a0a14',line:'#1d1d2e',tor:'#b026ff',neon:'#39ff14',cyan:'#00e5ff',magenta:'#ff2e88',amber:'#ffb000'},
+  fontFamily:{sans:['"Space Grotesk"','system-ui','sans-serif'],mono:['"JetBrains Mono"','monospace']}
+}}}
+</script>
+<style>
+:root{
+  --bg:#04040a; --fg:#eceaf5; --surface:#0a0a14; --border:#1d1d2e;
+  --tor:#b026ff; --neon:#39ff14; --cyan:#00e5ff; --magenta:#ff2e88; --amber:#ffb000;
+  --acc:var(--tor); --acc-rgb:176,38,255;
+  --ease:cubic-bezier(.22,1,.36,1);
+}
+.a-tor{--acc:var(--tor);--acc-rgb:176,38,255}
+.a-neon{--acc:var(--neon);--acc-rgb:57,255,20}
+.a-cyan{--acc:var(--cyan);--acc-rgb:0,229,255}
+.a-magenta{--acc:var(--magenta);--acc-rgb:255,46,136}
+.a-amber{--acc:var(--amber);--acc-rgb:255,176,0}
+
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+body{margin:0;min-height:100dvh;background:var(--bg);color:var(--fg);
+  font-family:'Space Grotesk',system-ui,sans-serif;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+.mono{font-family:'JetBrains Mono',monospace}
+::selection{background:rgba(176,38,255,.35)}
+:focus-visible{outline:2px solid var(--acc);outline-offset:2px;border-radius:6px}
+::-webkit-scrollbar{width:8px}::-webkit-scrollbar-track{background:#08080f}::-webkit-scrollbar-thumb{background:#241d33;border-radius:8px}
+
+/* sfondo: rete + glow tor */
+.net{position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:
+    radial-gradient(50% 40% at 8% 0%, rgba(176,38,255,.13), transparent 60%),
+    radial-gradient(45% 40% at 100% 8%, rgba(0,229,255,.09), transparent 60%),
+    radial-gradient(40% 35% at 50% 108%, rgba(57,255,20,.07), transparent 62%),
+    linear-gradient(rgba(255,255,255,.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,.02) 1px, transparent 1px);
+  background-size:100% 100%,100% 100%,100% 100%,38px 38px,38px 38px;background-attachment:fixed}
+.scan::after{content:'';position:fixed;inset:0;z-index:1;pointer-events:none;
+  background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.16) 2px 4px)}
+#root{position:relative;z-index:2}
+
+/* componenti */
+.card{position:relative;border-radius:14px;border:1px solid var(--border);
+  background:linear-gradient(180deg,rgba(255,255,255,.03),rgba(255,255,255,.008)),var(--surface);
+  transition:transform .3s var(--ease),border-color .3s,box-shadow .3s}
+.card-i:hover{transform:translateY(-3px);border-color:rgba(var(--acc-rgb),.5);
+  box-shadow:0 0 0 1px rgba(var(--acc-rgb),.15),0 0 34px -8px rgba(var(--acc-rgb),.45)}
+.btn{border-radius:10px;min-height:2.7rem;font-family:'JetBrains Mono',monospace;letter-spacing:.09em;
+  text-transform:uppercase;padding:0 1.1rem;font-size:.76rem;font-weight:600;display:inline-flex;
+  align-items:center;justify-content:center;gap:.5rem;cursor:pointer;border:1px solid transparent;
+  transition:transform .16s cubic-bezier(.34,1.56,.64,1),box-shadow .3s,background .3s,border-color .3s}
+.btn:active{transform:scale(.97)}.btn:disabled{opacity:.4;pointer-events:none}
+.btn-p{color:#08040f;background:linear-gradient(180deg,rgba(var(--acc-rgb),1),rgba(var(--acc-rgb),.78));
+  border-color:rgba(var(--acc-rgb),.7);box-shadow:0 8px 26px -12px rgba(var(--acc-rgb),.9)}
+.btn-p:hover{filter:brightness(1.1)}
+.btn-o{color:var(--fg);border-color:rgba(var(--acc-rgb),.45);background:transparent}
+.btn-o:hover{background:rgba(var(--acc-rgb),.1);border-color:rgba(var(--acc-rgb),.8)}
+.btn-g{color:#8b8aa0;background:transparent}.btn-g:hover{color:var(--fg)}
+.inp{width:100%;border-radius:10px;background:#08080f;border:1px solid var(--border);min-height:2.8rem;
+  font-family:'JetBrains Mono',monospace;padding:0 .9rem;font-size:.86rem;color:var(--fg);transition:border-color .25s,box-shadow .25s}
+.inp::placeholder{color:#54546a}
+.inp:focus{outline:none;border-color:rgba(var(--acc-rgb),.65);box-shadow:0 0 0 3px rgba(var(--acc-rgb),.1)}
+select.inp option{background:#08080f}
+.badge{font-family:'JetBrains Mono',monospace;letter-spacing:.14em;text-transform:uppercase;font-size:.58rem;
+  color:var(--acc);background:rgba(var(--acc-rgb),.1);border:1px solid rgba(var(--acc-rgb),.35);border-radius:999px;padding:.2rem .6rem;white-space:nowrap}
+.eyebrow{font-family:'JetBrains Mono',monospace;font-size:.6rem;letter-spacing:.3em;text-transform:uppercase;color:var(--acc)}
+.brk{position:absolute;width:14px;height:14px;border-color:rgba(var(--acc-rgb),.55);pointer-events:none}
+.grad{background:linear-gradient(100deg,#fff 0%,var(--acc) 50%,#fff 100%);-webkit-background-clip:text;background-clip:text;color:transparent}
+
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.45}}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.12}}
+@keyframes rise{0%{opacity:0;transform:translateY(18px)}100%{opacity:1;transform:translateY(0)}}
+@keyframes pop{0%{opacity:0;transform:scale(.95)}100%{opacity:1;transform:scale(1)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes marq{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+@keyframes bootbar{0%{width:0}100%{width:100%}}
+@keyframes ring{0%{transform:scale(.5);opacity:.85}100%{transform:scale(2);opacity:0}}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+.pulse{animation:pulse 2s ease-in-out infinite}
+.rise,.stg>*{opacity:0;animation:rise .55s var(--ease) forwards}
+.stg>:nth-child(1){animation-delay:.04s}.stg>:nth-child(2){animation-delay:.1s}.stg>:nth-child(3){animation-delay:.16s}
+.stg>:nth-child(4){animation-delay:.22s}.stg>:nth-child(5){animation-delay:.28s}.stg>:nth-child(6){animation-delay:.34s}
+.pop{animation:pop .3s var(--ease) both}
+.flt{animation:float 6s ease-in-out infinite}
+.marq{animation:marq 34s linear infinite}
+.will{will-change:transform,opacity}
+@media (prefers-reduced-motion:reduce){.rise,.stg>*{animation-duration:.01ms}.marq{animation:none}}
+#err{position:fixed;left:12px;right:12px;bottom:12px;z-index:200;display:none;padding:14px;border-radius:12px;
+  background:#160820;border:1px solid #ff2e8855;color:#ff9ad0;font:12px/1.5 monospace;white-space:pre-wrap}
+</style>
+</head>
+<body class="scan">
+<div class="net"></div>
+<div id="root"></div>
+<div id="err"></div>
+
+<script>
+window.__F=function(m){var b=document.getElementById('err');if(b&&b.style.display!=='block'){b.textContent='GUSTAVOEURO // ERRORE DI AVVIO\n'+m+'\n\nRicarica la pagina.';b.style.display='block'}};
+window.addEventListener('error',e=>window.__F(e.message||'Errore'));
+window.addEventListener('unhandledrejection',e=>window.__F(String(e.reason)));
+setTimeout(()=>{var r=document.getElementById('root');if(r&&!r.firstElementChild)window.__F('React non ha montato l\'app.')},7000);
+</script>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.production.min.js" crossorigin></script>
+<script>window.React||document.write('<script src="https://cdn.jsdelivr.net/npm/react@18.3.1/umd/react.production.min.js" crossorigin><\/script>');</script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js" crossorigin></script>
+<script>window.ReactDOM||document.write('<script src="https://cdn.jsdelivr.net/npm/react-dom@18.3.1/umd/react-dom.production.min.js" crossorigin><\/script>');</script>
+<script src="https://unpkg.com/@babel/standalone@7.25.6/babel.min.js"></script>
+<script>window.Babel||document.write('<script src="https://cdn.jsdelivr.net/npm/@babel/standalone@7.25.6/babel.min.js"><\/script>');</script>
+
+<script type="text/babel" data-presets="react">
+const { useState, useEffect, useCallback, useRef, createContext, useContext } = React;
+
+/* ================= CONFIG ================= */
+const LOGO='assets/logo.png';
+const TG='https://t.me/gustavoeuro';
+const TG_REVIEWS='https://t.me/+gBf54xWnFapjMmRh';
+const PGP='7B3F 9A21 C4E8 5D06 1F77  8AC2 30B9 4E11';
+const ONION='gustavoeuro7x2k.onion';
+const SINCE='2022';
+/* password: ENDTOEND!0 (non in chiaro) */
+const KEY=[69,78,68,84,79,69,78,68,33,48];
+const decodeKey=()=>String.fromCharCode.apply(null,KEY);
+const WALLETS={USDT:'Rh2z4dzfHqE5Sd3DEV424ZWUE6XkCpNoPD7DgLiFCcV',BTC:'bc1qcjcf7kunlrla8qn6jwxg00hyjj6w8nnr67lk8v',LTC:'ltc1qpayxkexa48s6atp48quev2p2f8xnp79pa8zlkx'};
+const SHIPPERS=['POSTE ITALIANE','BRT','GLS','DHL','LOCKER INPOST'];
+const PREFIXES=['+39','+34','+33','+44','+49','+41','+43','+351','+32','+31','+1'];
+const HEX='0123456789ABCDEF';
+const rnd=n=>Array.from({length:n},()=>HEX[Math.floor(Math.random()*16)]).join('');
+/* foto banconote (prova piu percorsi, poi fallback locale) */
+const BANK_SRC={
+ p1:['https://www.matttworld.com/images/cash/p1.jpg','https://www.matttworld.com/images/p1.jpg','assets/banconote-10.webp'],
+ p2:['https://www.matttworld.com/images/cash/p2.jpg','https://www.matttworld.com/images/p2.jpg','assets/banconote-20.webp'],
+ p3:['https://www.matttworld.com/images/cash/p3.jpg','https://www.matttworld.com/images/p3.jpg','assets/banconote-50.webp'],
+ p4:['https://www.matttworld.com/images/cash/p4.jpg','https://www.matttworld.com/images/p4.jpg','assets/banconote-mix.webp'],
+ p5:['https://www.matttworld.com/images/cash/p5.jpg','https://www.matttworld.com/images/p5.jpg','assets/banconote-10.webp'],
+ p6:['https://www.matttworld.com/images/cash/p6.jpg','https://www.matttworld.com/images/p6.jpg','assets/banconote-50.webp'],
+};
+
+/* ================= TRADUZIONI ================= */
+const M={
+it:{
+ c:{back:'← MENU',copy:'COPIA',copied:'COPIATO',total:'TOTALE',close:'Chiudi'},
+ gate:{t:'ACCESSO RISERVATO',s:'INSERISCI LA PASSWORD PER ENTRARE',w:'PASSWORD ERRATA',ok:'SBLOCCA',hint:'password fornita su invito'},
+ lang:{t:'SELEZIONA LINGUA',go:'ENTRA'},
+ nav:{home:'Nodo',cash:'Banconote',paypal:'Trasferimenti',quality:'Quality',reviews:'Feedback',faq:'FAQ'},
+ home:{tag:'NON DIAMO SPIEGAZIONI. FORNIAMO SOLO RISULTATI A CHI SA GIA COSA CHIEDERE.',
+  sub:'Circolo operativo nato nel sommerso. Operativi dal 2022. Canale criptato, transazioni verificate, zero log.',
+  idx:'INDICE OPERATIVO',since:'OPERATIVI DAL 2022',trust:'PROTOCOLLI ATTIVI'},
+ cash:{e:'MODULO 01 // BANCONOTE',t:'RISERVA CONTANTI FISICI',d:'Banconote Grade AAA+ in fibra di cotone 100%. Superano test UV, penna e scanner bancario. Spedizione sottovuoto anti-Xray.',tag:'GRADE AAA+',
+  prods:{p1:['ENTRY LEVEL','500 EUR (25 pezzi). Ideale per test iniziali.'],p2:['SCORTA OPERATIVA','1.500 EUR (75 pezzi). Per distribuzione.'],p3:['VOLUME INDUSTRIALE','4.000 EUR (200 pezzi). Grandi volumi.'],p4:['PACK STARTER','750 EUR (15 pezzi). Estetica impeccabile.'],p5:['BANK RESERVE','2.500 EUR (50 pezzi). Indistinguibili.'],p6:['POTERE DI SMERCIO','7.500 EUR (150 pezzi). Solo clienti VIP.']},
+  specs:{a:'Cotone 100%',b:'UV completa',c:'Scanner 100% pass',d:'Garanzia totale'}},
+ paypal:{e:'MODULO 02 // ROUTING P2P',t:'TRASFERIMENTI PAYPAL',d:'Routing P2P con fondi puliti via exchange terzi. Ricevi direttamente sul tuo conto.',tag:'ROUTING SICURO',
+  liq:'LIQUIDITA',on:'ONLINE',nodes:'NODI ATTIVI',enc:'RSA-4096',cost:'Costo',recv:'Ricevi',sub:'Ricevi {a} EUR sul tuo PayPal',
+  packs:{p1:'BASE',p2:'ADVANCED',p3:'VIP',p4:'PREMIUM',p5:'ELITE',p6:'MASTER'}},
+ quality:{e:'GALLERIA VERIFICATA',t:'QUALITY CHECK',d:'Foto reali del materiale prima di ogni spedizione.',tag:'ONLINE'},
+ reviews:{e:'REGISTRO VERIFICATO',t:'FEEDBACK',q:'LE RECENSIONI SONO SOLO SU TELEGRAM',d:'Il registro feedback e moderato e vive nel canale. Entra per leggerle e lasciare la tua.',cta:'APRI CANALE FEEDBACK',stat:'98% POSITIVI'},
+ faq:{e:'MODULO 03 // DOCUMENTAZIONE',t:'FAQ & SICUREZZA',d:'Protocolli operativi, garanzie e info spedizioni.',tag:'DOCS OK',sec:'CONNESSIONE SICURA',secS:'Crittografia end-to-end // Nessun log salvato',prot:'PROTOCOLLI',
+  protList:['Canali criptati end-to-end','Nessuna conservazione dati','Transazioni anonime via crypto','Server offshore'],
+  q1:['Come funziona la spedizione?','Stealth packaging anonimo. Tracking su Telegram. EU 48-72h.'],
+  q2:['Accettate pagamenti anonimi?','Si. Crypto: i piu veloci, anonimato totale.'],
+  q3:['Come funziona la ricarica PayPal?','Fondi accreditati in 1-4 ore via Amici e Familiari.'],
+  q4:['Le banconote passano i controlli?','Si, Grade AAA+. Test penna, UV e tatto superati.'],
+  q5:['E se il pacco viene sequestrato?','Rispedizione gratuita o rimborso. Successo oltre il 98%.'],
+  q6:['I miei dati sono al sicuro?','Nessun dato conservato. Log cancellati ogni 24 ore.']},
+ legal:{privacy:{t:'PRIVACY',u:'Ultimo aggiornamento: Aprile 2026. Trattamento conforme, crittografia avanzata, nessuna condivisione.',
+   s:[['1. DATI RACCOLTI','Solo i dati strettamente necessari.'],['2. FINALITA','Gestione richieste, sicurezza, adempimenti.'],['3. SICUREZZA','Crittografia avanzata, eliminazione sicura.'],['4. DIRITTI','Accesso, rettifica, cancellazione.'],['5. TRASFERIMENTO','Nessuna condivisione con terze parti.']]},
+  terms:{t:'TERMINI',u:'Ultimo aggiornamento: Aprile 2026. Condizioni d\'uso e regole del circolo.',
+   s:[['1. ACCETTAZIONE','L\'accesso implica accettazione integrale.'],['2. SERVIZIO','Piattaforma informativa.'],['3. ETA','Riservato ai 18+.'],['4. CONDOTTA','Nessun uso illegale, rispetto della sicurezza.'],['5. RESPONSABILITA','Nessuna responsabilita per danni indiretti.']]},
+  cookies:{t:'COOKIE',u:'Ultimo aggiornamento: Aprile 2026. Solo cookie tecnici essenziali.',
+   s:[['1. COSA SONO','File di testo salvati durante la navigazione.'],['2. TIPI','Sessione, sicurezza, preferenze.'],['3. GESTIONE','Gestibili dal browser.'],['4. TERZE PARTI','Nessun tracciamento esterno.'],['5. DURATA','Max sessione o 24 ore.']]}},
+ checkout:{sec:'SESSIONE CRITTATA',steps:['DATI','VERIFICA','PAGAMENTO','CONFERMA'],
+  g:['HAI TELEGRAM?','E OBBLIGATORIO PER LA GESTIONE ANONIMA','SI, PROCEDI','SCARICA TELEGRAM'],
+  s1:'STEP 1 // SPEDIZIONE',sum:'RIEPILOGO',tot:'TOTALE',addr:'INDIRIZZO',street:'VIA',num:'N.',zip:'CAP',city:'CITTA',cont:'CONTATTI',email:'EMAIL',phone:'CELLULARE',cour:'CORRIERE',locker:'CODICE LOCKER',go:'CONTINUA',fill:'Compila tutti i campi',
+  sh:{p:['ECONOMY','2-4 GG'],b:['EXPRESS','2-3 GG'],g:['PREMIUM','24-48H'],d:['ASSICURATA','24h'],l:['ANONIMO','2-4 GG']},
+  s2:'STEP 2 // PAGAMENTO',sub2:'SCEGLI IL METODO',crypto:'CRYPTO',csub:'USDT - anonimo',cbadge:'CONSIGLIATO',nofee:'0% TASSE',bon:'BONIFICO',bsub:'SEPA 24/48H',bfee:'+10%',amz:'BUONI AMAZON',asub:'verifica manuale',afee:'+20%',
+  cq:['HAI UN WALLET CRYPTO?','Ti serve un wallet per pagare in USDT','SI','NO'],cg:['COME CREARE UN WALLET','Scarica Trust Wallet o MetaMask','Salva la frase segreta','Compra USDT su un exchange','Trasferisci al tuo wallet','HO CAPITO'],
+  aq:['HAI UN BUONO AMAZON?','Serve il codice a 15 cifre','SI','NO'],ag:['DOVE COMPRARLO','Tabaccherie, supermercati, Mediaworld.','NON riscattarlo: invia il codice vergine.','HO CAPITO'],
+  conf:'CONFERMA ORDINE',rate:'LIVE RATE 1 EUR ~ 1.15 USDT',net:'RETE',send:'IMPORTO',sub:'SUBTOTALE',bfeeL:'TASSA BANCARIA +10%',vfeeL:'CONVERSIONE +20%',pay:'TOTALE DA PAGARE',
+  done:'ORDINE CONFERMATO',doneS:'REGISTRATO NEL SISTEMA',code:'CODICE ORDINE',cc:'COPIA CODICE',wait:'IN ATTESA DI CONFERMA BLOCKCHAIN...',ct:'CONTATTA OPERATORE',back:'TORNA',warn:'L\'ordine parte solo dopo l\'invio di codice e prova di pagamento su Telegram.'}
+},
+en:{
+ c:{back:'← MENU',copy:'COPY',copied:'COPIED',total:'TOTAL',close:'Close'},
+ gate:{t:'RESTRICTED ACCESS',s:'ENTER THE PASSWORD TO GET IN',w:'WRONG PASSWORD',ok:'UNLOCK',hint:'password given by invitation'},
+ lang:{t:'SELECT LANGUAGE',go:'ENTER'},
+ nav:{home:'Node',cash:'Banknotes',paypal:'Transfers',quality:'Quality',reviews:'Feedback',faq:'FAQ'},
+ home:{tag:'WE DO NOT GIVE EXPLANATIONS. WE ONLY DELIVER RESULTS TO THOSE WHO ALREADY KNOW WHAT TO ASK FOR.',
+  sub:'Operative circle born in the underground. Operating since 2022. Encrypted channel, verified transactions, zero logs.',
+  idx:'OPERATIVE INDEX',since:'OPERATING SINCE 2022',trust:'ACTIVE PROTOCOLS'},
+ cash:{e:'MODULE 01 // BANKNOTES',t:'PHYSICAL CASH RESERVE',d:'Grade AAA+ 100% cotton fiber banknotes. Pass UV, pen and bank scanner tests. Vacuum anti-Xray shipping.',tag:'GRADE AAA+',
+  prods:{p1:['ENTRY LEVEL','500 EUR (25 notes). Ideal for first tests.'],p2:['OPERATIVE STOCK','1.500 EUR (75 notes). For distribution.'],p3:['INDUSTRIAL VOLUME','4.000 EUR (200 notes). Large volumes.'],p4:['PACK STARTER','750 EUR (15 notes). Flawless aesthetics.'],p5:['BANK RESERVE','2.500 EUR (50 notes). Indistinguishable.'],p6:['SPENDING POWER','7.500 EUR (150 notes). VIP only.']},
+  specs:{a:'100% Cotton',b:'Full UV',c:'Scanner 100% pass',d:'Full warranty'}},
+ paypal:{e:'MODULE 02 // P2P ROUTING',t:'PAYPAL TRANSFERS',d:'P2P routing with clean funds via third-party exchanges. You receive directly on your account.',tag:'SECURE ROUTING',
+  liq:'LIQUIDITY',on:'ONLINE',nodes:'ACTIVE NODES',enc:'RSA-4096',cost:'Cost',recv:'Receive',sub:'Receive {a} EUR on your PayPal',
+  packs:{p1:'BASE',p2:'ADVANCED',p3:'VIP',p4:'PREMIUM',p5:'ELITE',p6:'MASTER'}},
+ quality:{e:'VERIFIED GALLERY',t:'QUALITY CHECK',d:'Real photos of the material before every shipment.',tag:'ONLINE'},
+ reviews:{e:'VERIFIED REGISTRY',t:'FEEDBACK',q:'REVIEWS LIVE ON TELEGRAM ONLY',d:'The feedback registry is moderated and lives in the channel. Join to read and leave yours.',cta:'OPEN FEEDBACK CHANNEL',stat:'98% POSITIVE'},
+ faq:{e:'MODULE 03 // DOCUMENTATION',t:'FAQ & SECURITY',d:'Operating protocols, guarantees and shipping info.',tag:'DOCS OK',sec:'SECURE CONNECTION',secS:'End-to-end encryption // No logs stored',prot:'PROTOCOLS',
+  protList:['End-to-end encrypted channels','No data retention','Anonymous crypto transactions','Offshore servers'],
+  q1:['How does shipping work?','Stealth anonymous packaging. Tracking on Telegram. EU 48-72h.'],
+  q2:['Do you accept anonymous payments?','Yes. Crypto: fastest, total anonymity.'],
+  q3:['How does the PayPal top-up work?','Funds credited within 1-4h via Friends & Family.'],
+  q4:['Do banknotes pass checks?','Yes, Grade AAA+. Pen, UV and touch tests passed.'],
+  q5:['What if the package is seized?','Free reshipping or refund. Success rate above 98%.'],
+  q6:['Is my data safe?','No data stored. Logs deleted every 24h.']},
+ legal:{privacy:{t:'PRIVACY',u:'Last updated: April 2026. Compliant processing, advanced encryption, no third-party sharing.',
+   s:[['1. DATA COLLECTED','Only strictly necessary data.'],['2. PURPOSE','Requests, security, compliance.'],['3. SECURITY','Advanced encryption, secure deletion.'],['4. RIGHTS','Access, rectification, deletion.'],['5. TRANSFER','No sharing with third parties.']]},
+  terms:{t:'TERMS',u:'Last updated: April 2026. Terms of use and circle rules.',
+   s:[['1. ACCEPTANCE','Access implies full acceptance.'],['2. SERVICE','Informational platform.'],['3. AGE','18+ only.'],['4. CONDUCT','No illegal use, respect security.'],['5. LIABILITY','No liability for indirect damages.']]},
+  cookies:{t:'COOKIES',u:'Last updated: April 2026. Essential technical cookies only.',
+   s:[['1. WHAT THEY ARE','Text files stored while browsing.'],['2. TYPES','Session, security, preferences.'],['3. MANAGEMENT','Manageable from the browser.'],['4. THIRD PARTIES','No external tracking.'],['5. DURATION','Max session or 24 hours.']]}},
+ checkout:{sec:'ENCRYPTED SESSION',steps:['DATA','VERIFY','PAYMENT','CONFIRM'],
+  g:['DO YOU HAVE TELEGRAM?','IT IS REQUIRED FOR ANONYMOUS MANAGEMENT','YES, PROCEED','DOWNLOAD TELEGRAM'],
+  s1:'STEP 1 // SHIPPING',sum:'SUMMARY',tot:'TOTAL',addr:'ADDRESS',street:'STREET',num:'N.',zip:'ZIP',city:'CITY',cont:'CONTACTS',email:'EMAIL',phone:'MOBILE',cour:'COURIER',locker:'LOCKER CODE',go:'CONTINUE',fill:'Fill all fields',
+  sh:{p:['ECONOMY','2-4 DAYS'],b:['EXPRESS','2-3 DAYS'],g:['PREMIUM','24-48H'],d:['INSURED','24h'],l:['ANONYMOUS','2-4 DAYS']},
+  s2:'STEP 2 // PAYMENT',sub2:'CHOOSE THE METHOD',crypto:'CRYPTO',csub:'USDT - anonymous',cbadge:'RECOMMENDED',nofee:'0% FEES',bon:'BANK TRANSFER',bsub:'SEPA 24/48H',bfee:'+10%',amz:'AMAZON VOUCHERS',asub:'manual verification',afee:'+20%',
+  cq:['DO YOU HAVE A CRYPTO WALLET?','You need a wallet to pay in USDT','YES','NO'],cg:['HOW TO CREATE A WALLET','Download Trust Wallet or MetaMask','Save the secret phrase','Buy USDT on an exchange','Transfer to your wallet','UNDERSTOOD'],
+  aq:['DO YOU HAVE AN AMAZON VOUCHER?','You need the 15-digit code','YES','NO'],ag:['WHERE TO BUY','Tobacco shops, supermarkets, Mediaworld.','Do NOT redeem it: send the virgin code.','UNDERSTOOD'],
+  conf:'CONFIRM ORDER',rate:'LIVE RATE 1 EUR ~ 1.15 USDT',net:'NETWORK',send:'AMOUNT',sub:'SUBTOTAL',bfeeL:'BANK FEE +10%',vfeeL:'CONVERSION +20%',pay:'TOTAL TO PAY',
+  done:'ORDER CONFIRMED',doneS:'REGISTERED IN THE SYSTEM',code:'ORDER CODE',cc:'COPY CODE',wait:'WAITING FOR BLOCKCHAIN CONFIRMATION...',ct:'CONTACT OPERATOR',back:'BACK',warn:'The order starts only after sending the code and payment proof on Telegram.'}
+},
+es:{
+ c:{back:'← MENU',copy:'COPIAR',copied:'COPIADO',total:'TOTAL',close:'Cerrar'},
+ gate:{t:'ACCESO RESTRINGIDO',s:'INTRODUCE LA CONTRASENA PARA ENTRAR',w:'CONTRASENA INCORRECTA',ok:'DESBLOQUEAR',hint:'contrasena dada por invitacion'},
+ lang:{t:'SELECCIONA IDIOMA',go:'ENTRAR'},
+ nav:{home:'Nodo',cash:'Billetes',paypal:'Transferencias',quality:'Quality',reviews:'Feedback',faq:'FAQ'},
+ home:{tag:'NO DAMOS EXPLICACIONES. ENTREGAMOS SOLO RESULTADOS A QUIEN YA SABE QUE PEDIR.',
+  sub:'Circulo operativo nacido en el submundo. Operativos desde 2022. Canal cifrado, transacciones verificadas, cero logs.',
+  idx:'INDICE OPERATIVO',since:'OPERATIVOS DESDE 2022',trust:'PROTOCOLOS ACTIVOS'},
+ cash:{e:'MODULO 01 // BILLETES',t:'RESERVA DE EFECTIVO FISICO',d:'Billetes Grade AAA+ 100% fibra de algodon. Pasan test UV, boligrafo y escaner.',tag:'GRADE AAA+',
+  prods:{p1:['ENTRY LEVEL','500 EUR (25 billetes). Ideal para test.'],p2:['STOCK OPERATIVO','1.500 EUR (75 billetes). Para distribucion.'],p3:['VOLUMEN INDUSTRIAL','4.000 EUR (200 billetes). Grandes volumenes.'],p4:['PACK STARTER','750 EUR (15 billetes). Estetica impecable.'],p5:['BANK RESERVE','2.500 EUR (50 billetes). Indistinguibles.'],p6:['PODER DE GASTO','7.500 EUR (150 billetes). Solo VIP.']},
+  specs:{a:'Algodon 100%',b:'UV completa',c:'Scanner 100% pass',d:'Garantia total'}},
+ paypal:{e:'MODULO 02 // ROUTING P2P',t:'TRANSFERENCIAS PAYPAL',d:'Routing P2P con fondos limpios via exchanges terceros. Recibes directo en tu cuenta.',tag:'ROUTING SEGURO',
+  liq:'LIQUIDEZ',on:'ONLINE',nodes:'NODOS ACTIVOS',enc:'RSA-4096',cost:'Coste',recv:'Recibe',sub:'Recibe {a} EUR en tu PayPal',
+  packs:{p1:'BASE',p2:'ADVANCED',p3:'VIP',p4:'PREMIUM',p5:'ELITE',p6:'MASTER'}},
+ quality:{e:'GALERIA VERIFICADA',t:'QUALITY CHECK',d:'Fotos reales del material antes de cada envio.',tag:'ONLINE'},
+ reviews:{e:'REGISTRO VERIFICADO',t:'FEEDBACK',q:'LAS RESENAS ESTAN SOLO EN TELEGRAM',d:'El registro de feedback vive en el canal. Entra para leerlas y dejar la tuya.',cta:'ABRIR CANAL FEEDBACK',stat:'98% POSITIVOS'},
+ faq:{e:'MODULO 03 // DOCUMENTACION',t:'FAQ & SEGURIDAD',d:'Protocolos, garantias e info de envios.',tag:'DOCS OK',sec:'CONEXION SEGURA',secS:'Cifrado de extremo a extremo // Sin logs',prot:'PROTOCOLOS',
+  protList:['Canales cifrados de extremo a extremo','Sin conservacion de datos','Transacciones anonimas via crypto','Servidores offshore'],
+  q1:['Como funciona el envio?','Embalaje stealth anonimo. Tracking en Telegram. UE 48-72h.'],
+  q2:['Aceptais pagos anonimos?','Si. Crypto: los mas rapidos, anonimato total.'],
+  q3:['Como funciona la recarga PayPal?','Fondos acreditados en 1-4 h via Amigos y Familiares.'],
+  q4:['Los billetes pasan los controles?','Si, Grade AAA+. Test boligrafo, UV y tacto superados.'],
+  q5:['Y si incautan el paquete?','Reenvio gratis o reembolso. Exito superior al 98%.'],
+  q6:['Estan seguros mis datos?','Sin datos guardados. Logs borrados cada 24 h.']},
+ legal:{privacy:{t:'PRIVACIDAD',u:'Ultima actualizacion: Abril 2026. Tratamiento conforme, cifrado avanzado, sin terceros.',
+   s:[['1. DATOS','Solo los estrictamente necesarios.'],['2. FINALIDAD','Gestion, seguridad, cumplimiento.'],['3. SEGURIDAD','Cifrado avanzado, borrado seguro.'],['4. DERECHOS','Acceso, rectificacion, supresion.'],['5. TRANSFERENCIA','Sin cesion a terceros.']]},
+  terms:{t:'TERMINOS',u:'Ultima actualizacion: Abril 2026. Condiciones de uso y reglas.',
+   s:[['1. ACEPTACION','El acceso implica aceptacion integra.'],['2. SERVICIO','Plataforma informativa.'],['3. EDAD','Solo 18+.'],['4. CONDUCTA','Sin uso ilegal, respeto de la seguridad.'],['5. RESPONSABILIDAD','Sin responsabilidad por danos indirectos.']]},
+  cookies:{t:'COOKIES',u:'Ultima actualizacion: Abril 2026. Solo cookies tecnicas esenciales.',
+   s:[['1. QUE SON','Archivos guardados durante la navegacion.'],['2. TIPOS','Sesion, seguridad, preferencias.'],['3. GESTION','Gestionables desde el navegador.'],['4. TERCEROS','Sin tracking externo.'],['5. DURACION','Max sesion o 24 horas.']]}},
+ checkout:{sec:'SESION CIFRADA',steps:['DATOS','VERIFICAR','PAGO','CONFIRMAR'],
+  g:['TIENES TELEGRAM?','ES OBLIGATORIO PARA LA GESTION ANONIMA','SI, PROCEDER','DESCARGAR TELEGRAM'],
+  s1:'PASO 1 // ENVIO',sum:'RESUMEN',tot:'TOTAL',addr:'DIRECCION',street:'CALLE',num:'N.',zip:'CP',city:'CIUDAD',cont:'CONTACTOS',email:'EMAIL',phone:'MOVIL',cour:'MENSAJERO',locker:'CODIGO LOCKER',go:'CONTINUAR',fill:'Completa todos los campos',
+  sh:{p:['ECONOMY','2-4 DIAS'],b:['EXPRESS','2-3 DIAS'],g:['PREMIUM','24-48H'],d:['ASEGURADO','24h'],l:['ANONIMO','2-4 DIAS']},
+  s2:'PASO 2 // PAGO',sub2:'ELIGE EL METODO',crypto:'CRYPTO',csub:'USDT - anonimo',cbadge:'RECOMENDADO',nofee:'0% TASAS',bon:'TRANSFERENCIA',bsub:'SEPA 24/48H',bfee:'+10%',amz:'CHEQUES AMAZON',asub:'verificacion manual',afee:'+20%',
+  cq:['TIENES CARTERA CRYPTO?','Necesitas una cartera para pagar en USDT','SI','NO'],cg:['COMO CREAR UNA CARTERA','Descarga Trust Wallet o MetaMask','Guarda la frase secreta','Compra USDT en un exchange','Transfiere a tu cartera','ENTENDIDO'],
+  aq:['TIENES UN CHEQUE AMAZON?','Necesitas el codigo de 15 digitos','SI','NO'],ag:['DONDE COMPRARLO','Estancos, supermercados, Mediaworld.','NO lo canjees: envia el codigo virgen.','ENTENDIDO'],
+  conf:'CONFIRMAR PEDIDO',rate:'LIVE RATE 1 EUR ~ 1.15 USDT',net:'RED',send:'IMPORTE',sub:'SUBTOTAL',bfeeL:'TASA BANCARIA +10%',vfeeL:'CONVERSION +20%',pay:'TOTAL A PAGAR',
+  done:'PEDIDO CONFIRMADO',doneS:'REGISTRADO EN EL SISTEMA',code:'CODIGO PEDIDO',cc:'COPIAR CODIGO',wait:'ESPERANDO CONFIRMACION BLOCKCHAIN...',ct:'CONTACTAR OPERADOR',back:'VOLVER',warn:'El pedido parte solo tras enviar el codigo y la prueba de pago en Telegram.'}
+}};
+const LANGS=[{c:'it',f:'🇮🇹'},{c:'en',f:'🇬🇧'},{c:'es',f:'🇪🇸'}];
+
+/* ================= DATI ================= */
+const CASH=[{id:'p1',price:500,sp:['a','b','d']},{id:'p2',price:1500,sp:['a','b','c']},{id:'p3',price:4000,sp:['a','b','c','d']},
+ {id:'p4',price:750,sp:['a','b']},{id:'p5',price:2500,sp:['a','b','c','d']},{id:'p6',price:7500,sp:['a','b','c','d']}];
+const PAYPAL=[{id:'p1',c:120,r:250},{id:'p2',c:200,r:450},{id:'p3',c:300,r:700},{id:'p4',c:450,r:1100},{id:'p5',c:700,r:1800},{id:'p6',c:1000,r:2800}];
+
+/* ================= UTILS ================= */
+const LOC={it:'it-IT',en:'en-GB',es:'es-ES'};
+const money=(v,l)=>new Intl.NumberFormat(LOC[l]||'it-IT',{style:'currency',currency:'EUR'}).format(v);
+const res=(o,p)=>p.split('.').reduce((a,k)=>(a&&a[k]!==undefined?a[k]:undefined),o);
+const cx=(...a)=>a.filter(Boolean).join(' ');
+const nav=p=>{window.location.hash=p};
+const isMob=()=>/Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+const oid=()=>'GST-'+rnd(5)+'-'+Math.floor(Math.random()*90+10);
+async function cp(t){try{await navigator.clipboard.writeText(t);return true}catch{return false}}
+function useRoute(){const[p,s]=useState(()=>(location.hash||'#/').slice(1)||'/');
+  useEffect(()=>{const f=()=>{s((location.hash||'#/').slice(1)||'/');window.scrollTo(0,0)};addEventListener('hashchange',f);return()=>removeEventListener('hashchange',f)},[]);return p}
+
+/* ================= CONTEXT ================= */
+const Cx=createContext();
+function Prov({children}){
+  const[lang,setLang]=useState(()=>localStorage.getItem('ge-lang')||'it');
+  const[items,setItems]=useState(()=>{try{return JSON.parse(localStorage.getItem('ge-cart'))||[]}catch{return[]}});
+  const[open,setOpen]=useState(false);
+  const[toast,setToast]=useState(null);
+  const[order,setOrder]=useState({sh:{addr:'',num:'',zip:'',city:'',email:'',pre:'+39',phone:'',cour:'',locker:''},method:'',coin:''});
+  const[sid]=useState(()=>rnd(8));
+  useEffect(()=>{localStorage.setItem('ge-lang',lang);document.documentElement.lang=lang},[lang]);
+  useEffect(()=>{localStorage.setItem('ge-cart',JSON.stringify(items))},[items]);
+  const t=useCallback((k,v)=>{let x=res(M[lang],k);if(x===undefined)x=res(M.it,k);
+    if(typeof x==='string'&&v)for(const a in v)x=x.replace('{'+a+'}',v[a]);return x},[lang]);
+  const tm=useCallback(m=>{setToast(m);setTimeout(()=>setToast(null),1900)},[]);
+  const add=useCallback(it=>setItems(p=>{const e=p.find(x=>x.id===it.id);return e?p.map(x=>x.id===it.id?{...x,qty:x.qty+it.qty}:x):[...p,it]}),[]);
+  return <Cx.Provider value={{lang,setLang,t,items,add,remove:id=>setItems(p=>p.filter(x=>x.id!==id)),
+    setQty:(id,q)=>setItems(p=>p.map(x=>x.id===id?{...x,qty:Math.max(1,q)}:x)),clear:()=>setItems([]),
+    open,setOpen,toast,tm,order,setOrder,sid,
+    total:items.reduce((s,i)=>s+i.unit*i.qty,0),count:items.reduce((s,i)=>s+i.qty,0)}}>{children}</Cx.Provider>;
+}
+const useApp=()=>useContext(Cx);
+
+/* ================= UI ================= */
+function Logo({s=36,cls=''}){const[e,setE]=useState(false);
+  if(e)return <div className={cx('flex items-center justify-center rounded-full border border-tor/40 bg-black mono font-bold text-tor',cls)} style={{width:s,height:s,fontSize:s*.44}}>G</div>;
+  return <img src={LOGO} alt="GUSTAVOEURO" width={s} height={s} className={cx('rounded-full object-cover border border-tor/30 bg-black',cls)} onError={()=>setE(true)}/>}
+const Brk=()=>[['left-0 top-0 rounded-tl-xl border-l border-t'],['right-0 top-0 rounded-tr-xl border-r border-t'],['bottom-0 left-0 rounded-bl-xl border-b border-l'],['bottom-0 right-0 rounded-br-xl border-b border-r']].map((c,i)=><span key={i} className={cx('brk',c)}/>);
+const Btn=({v='p',cls='',...r})=><button className={cx('btn',v==='p'?'btn-p':v==='o'?'btn-o':'btn-g',cls)} {...r}/>;
+const Card=({i,cls='',children,...r})=><div className={cx('card p-5',i&&'card-i',cls)} {...r}>{children}</div>;
+const Tag=({children})=><span className="badge inline-flex items-center gap-1.5"><span className="h-1 w-1 rounded-full pulse" style={{background:'var(--acc)'}}/>{children}</span>;
+const Back=({to='/node'})=>{const{t}=useApp();return <Btn v="g" onClick={()=>nav(to)}>{t('c.back')}</Btn>};
+
+/* immagine con fallback a catena */
+function Img({srcs,cls='',alt='',fb='◆'}){
+  const list=Array.isArray(srcs)?srcs:[srcs];
+  const[i,setI]=useState(0);
+  if(i>=list.length)return <div className={cx(cls,'flex items-center justify-center bg-gradient-to-br from-surface to-black text-tor/40 mono text-xs')}>{fb}</div>;
+  return <img src={list[i]} alt={alt} loading="lazy" decoding="async" draggable="false"
+    className={cx(cls,'select-none')} onError={()=>setI(i+1)}/>;
+}
+
+/* ================= BOOT ================= */
+function Boot(){
+  const{t}=useApp();
+  const[lines,setLines]=useState([]);const[pct,setPct]=useState(0);const[hx,setHx]=useState(rnd(34));
+  const script=[['BOOTING SECURE KERNEL','tor'],['LOADING AES-256-GCM','cyan'],['BUILDING TOR CIRCUIT (3 HOPS)','tor'],
+    ['ECDHE-X25519 HANDSHAKE ... OK','neon'],['PGP FINGERPRINT MATCH','amber'],['NODE ONLINE SINCE '+SINCE,'neon'],['CHANNEL ENCRYPTED','cyan']];
+  useEffect(()=>{
+    script.forEach((s,i)=>setTimeout(()=>setLines(l=>[...l,s]),230*i+150));
+    const h=setInterval(()=>setHx(rnd(34)),100);
+    const st=performance.now();let raf;
+    const tick=n=>{const k=Math.min(1,(n-st)/2300);setPct(Math.round(k*100));
+      if(k<1)raf=requestAnimationFrame(tick);else setTimeout(()=>nav(sessionStorage.getItem('ge-in')?'/node':'/gate'),400)};
+    raf=requestAnimationFrame(tick);return()=>{clearInterval(h);cancelAnimationFrame(raf)};
+  },[]);
+  const col={tor:'#b026ff',cyan:'#00e5ff',neon:'#39ff14',amber:'#ffb000'};
+  return (
+    <div className="fixed inset-0 z-[90] flex flex-col items-center justify-center bg-bg px-5">
+      <div className="card a-tor w-full max-w-sm p-6" style={{borderColor:'rgba(176,38,255,.25)'}}>
+        <Brk/>
+        <div className="relative mx-auto mb-4 h-16 w-16">
+          <span className="absolute inset-0 rounded-full border border-tor/50" style={{animation:'ring 2s ease-out infinite'}}/>
+          <Logo s={64} cls="relative border-0 flt"/>
+        </div>
+        <div className="mb-3 flex items-center justify-center gap-2">
+          <span className="h-1.5 w-1.5 rounded-full bg-tor pulse"/>
+          <p className="mono text-[10px] tracking-[.3em] text-tor/85">SYS://BOOT</p>
+        </div>
+        <div className="h-1 w-full overflow-hidden rounded-full bg-white/5">
+          <div className="h-full" style={{background:'linear-gradient(90deg,#b026ff,#00e5ff)',animation:'bootbar 2.3s cubic-bezier(.22,1,.36,1) forwards'}}/>
+        </div>
+        <p className="mono mt-2 text-right text-[10px] text-cyan">{String(pct).padStart(3,'0')}%</p>
+        <div className="mt-4 space-y-1.5">
+          {lines.map(([txt,c],i)=><p key={i} className="mono pop text-[10px]" style={{color:col[c]}}><span className="opacity-50">[ OK ]</span> {txt}</p>)}
+        </div>
+        <p className="mono mt-3 truncate text-[9px] tracking-widest text-white/25">{hx}</p>
+      </div>
+      <p className="mono mt-5 text-[10px] tracking-[.3em] text-white/40">CONNESSIONE SICURA</p>
+    </div>
+  );
+}
+
+/* ================= GATE ================= */
+function Gate(){
+  const{t,lang,setLang}=useApp();
+  const[code,setCode]=useState('');const[err,setErr]=useState(false);
+  const go=e=>{e.preventDefault();
+    if(code.trim().toUpperCase()===decodeKey()){sessionStorage.setItem('ge-in','1');nav('/node')}
+    else{setErr(true);setTimeout(()=>setErr(false),700)}};
+  return (
+    <div className="flex min-h-dvh items-center justify-center px-4">
+      <div className="card a-tor rise w-full max-w-sm p-6 text-center" style={{borderColor:'rgba(176,38,255,.25)'}}>
+        <Brk/>
+        <div className="relative mx-auto mb-5 h-20 w-20"><Logo s={80} cls="border-0"/></div>
+        <p className="mono text-[10px] tracking-[.32em] text-tor">SYS://AUTH.GATE</p>
+        <h1 className="mt-3 text-xl font-bold tracking-tight text-white">{t('gate.t')}</h1>
+        <p className="mt-1.5 text-xs text-white/45">{t('gate.s')}</p>
+        <div className="mt-3 flex justify-center gap-1.5">
+          {LANGS.map(l=><button key={l.c} onClick={()=>setLang(l.c)} className={cx('rounded-md border px-2.5 py-1 mono text-[10px] uppercase',lang===l.c?'border-tor/70 bg-tor/15 text-tor':'border-line text-white/45 hover:border-white/30')}>{l.f} {l.c}</button>)}
+        </div>
+        <form onSubmit={go} className="mt-5 space-y-3" style={err?{animation:'pop .4s'}:{}}>
+          <input value={code} onChange={e=>setCode(e.target.value)} autoFocus aria-label={t('gate.s')}
+            className="inp text-center uppercase tracking-[.35em]" placeholder="••••••••"/>
+          <Btn cls="w-full">{t('gate.ok')}</Btn>
+          {err&&<p className="mono text-[11px] tracking-widest text-magenta">{t('gate.w')}</p>}
+        </form>
+        <p className="mt-5 mono text-[9px] tracking-[.28em] text-white/25">{t('gate.hint')}</p>
+      </div>
+    </div>
+  );
+}
+
+/* ================= HEADER / FOOTER / CART ================= */
+function Header(){
+  const{t,lang,setLang,count,setOpen}=useApp();
+  const[mo,setMo]=useState(false),[lo,setLo]=useState(false);const ref=useRef(null);
+  useEffect(()=>{const f=e=>{if(ref.current&&!ref.current.contains(e.target)){setMo(false);setLo(false)}};document.addEventListener('mousedown',f);return()=>document.removeEventListener('mousedown',f)},[]);
+  const links=[['/node',t('nav.home')],['/cash',t('nav.cash')],['/paypal',t('nav.paypal')],['/quality',t('nav.quality')],['/feedback',t('nav.reviews')],['/faq',t('nav.faq')]];
+  return (
+    <header className="sticky top-0 z-50 border-b border-line/70 bg-bg/85 backdrop-blur-xl">
+      <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3">
+        <a href="#/node" className="flex items-center gap-2.5"><Logo s={32}/><span className="mono text-[13px] font-bold tracking-[.22em] text-white">GUSTAVOEURO</span></a>
+        <nav className="hidden items-center gap-0.5 lg:flex">{links.map(([to,l])=><a key={to} href={'#'+to} className="rounded-lg px-3 py-2 mono text-[10px] uppercase tracking-[.16em] text-white/45 transition-colors hover:bg-white/5 hover:text-tor">{l}</a>)}</nav>
+        <div className="flex items-center gap-2">
+          <span className="hidden items-center gap-1.5 rounded-lg border border-neon/30 px-2.5 py-2 mono text-[9px] uppercase tracking-[.18em] text-neon sm:flex">
+            <span className="h-1.5 w-1.5 rounded-full bg-neon pulse"/>CRYPTO ON
+          </span>
+          <div className="relative" ref={ref}>
+            <button onClick={()=>setLo(v=>!v)} className="rounded-lg border border-line px-2.5 py-2 mono text-[10px] uppercase tracking-widest text-white/60 hover:border-tor/60">{lang.toUpperCase()}</button>
+            {lo&&<ul className="card pop absolute right-0 mt-2 w-32 overflow-hidden p-1">{LANGS.map(l=><li key={l.c}><button onClick={()=>{setLang(l.c);setLo(false)}} className={cx('flex w-full items-center gap-2 rounded-lg px-3 py-2 mono text-xs uppercase',lang===l.c?'text-tor':'text-white/60 hover:bg-white/5')}>{l.f} {l.c.toUpperCase()}</button></li>)}</ul>}
+          </div>
+          <button onClick={()=>setOpen(true)} aria-label="cart" className="relative rounded-lg border border-line px-2.5 py-2 text-white/60 hover:border-tor/60">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7"><path d="M6 6h15l-1.5 9h-12z"/><circle cx="9" cy="20" r="1.3"/><circle cx="18" cy="20" r="1.3"/><path d="M6 6 5 3H2"/></svg>
+            {count>0&&<span className="absolute -right-1.5 -top-1.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-tor px-1 mono text-[9px] font-bold text-black">{count}</span>}
+          </button>
+          <button onClick={()=>setMo(v=>!v)} className="rounded-lg border border-line px-2.5 py-2 text-white/60 lg:hidden"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M3 6h18M3 12h18M3 18h18"/></svg></button>
+        </div>
+      </div>
+      {mo&&<nav className="pop border-t border-line/70 bg-surface px-4 py-3 lg:hidden">{links.map(([to,l])=><a key={to} href={'#'+to} onClick={()=>setMo(false)} className="block rounded-lg px-3 py-2.5 mono text-[11px] uppercase tracking-[.16em] text-white/55 hover:bg-white/5 hover:text-tor">{l}</a>)}</nav>}
+    </header>
+  );
+}
+function Footer(){
+  const{t,sid}=useApp();
+  const[now,setNow]=useState(new Date());
+  useEffect(()=>{const i=setInterval(()=>setNow(new Date()),1000);return()=>clearInterval(i)},[]);
+  return (
+    <footer className="mt-24 border-t border-line/70 px-4 py-10">
+      <div className="mx-auto max-w-6xl">
+        <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2">
+          {[['/privacy',t('legal.privacy.t')],['/terms',t('legal.terms.t')],['/cookies',t('legal.cookies.t')]].map(([to,l])=><a key={to} href={'#'+to} className="mono text-[10px] uppercase tracking-[.2em] text-white/40 hover:text-tor">{l}</a>)}
+        </div>
+        <div className="mt-6 flex flex-col items-center gap-2 text-center">
+          <p className="mono text-[10px] tracking-[.3em] text-tor">SITO CREATO NEL {SINCE} // OPERATIVI DAL {SINCE}</p>
+          <p className="mono text-[9px] tracking-[.22em] text-white/25">PGP {PGP}</p>
+          <p className="mono text-[9px] tracking-[.22em] text-white/25">ONION {ONION} // SESSION {sid} // {now.toLocaleTimeString('it-IT')}</p>
+        </div>
+      </div>
+    </footer>
+  );
+}
+function Cart(){
+  const{t,lang,items,remove,setQty,total,open,setOpen}=useApp();
+  if(!open)return null;
+  return(<>
+    <div onClick={()=>setOpen(false)} className="fixed inset-0 z-[60] bg-black/80 backdrop-blur-sm"/>
+    <aside className="pop fixed right-0 top-0 z-[61] flex h-full w-full max-w-md flex-col border-l border-line bg-surface">
+      <div className="flex items-center justify-between border-b border-line px-5 py-4">
+        <div className="flex items-center gap-2"><span className="h-1.5 w-1.5 rounded-full bg-tor pulse"/><h2 className="mono text-sm tracking-[.2em] text-white">CARRELLO</h2></div>
+        <button onClick={()=>setOpen(false)} className="text-white/50 hover:text-tor">✕</button>
+      </div>
+      <div className="flex-1 overflow-y-auto px-5 py-4">
+        {items.length===0?<div className="py-16 text-center"><p className="mono text-sm text-white/60">Vuoto</p></div>
+        :items.map(i=>(<div key={i.id} className="mb-4 flex gap-3 border-b border-line/60 pb-4">
+          <div className="flex-1"><p className="text-sm text-white">{i.name}</p><p className="mono text-[11px] text-white/45">{i.sub}</p>
+            <p className="mono mt-1 text-xs text-tor">{money(i.unit,lang)}</p>
+            <div className="mt-2 flex items-center gap-3"><input type="number" min="1" value={i.qty} onChange={e=>setQty(i.id,+e.target.value)} className="inp h-8 w-16 text-xs"/>
+              <button onClick={()=>remove(i.id)} className="mono text-[10px] uppercase tracking-widest text-white/45 hover:text-magenta">Rimuovi</button></div></div>
+          <p className="mono text-sm text-tor">{money(i.unit*i.qty,lang)}</p></div>))}
+      </div>
+      {items.length>0&&<div className="border-t border-line px-5 py-4">
+        <div className="mb-3 flex justify-between"><span className="mono text-xs uppercase tracking-widest text-white/50">{t('c.total')}</span><span className="mono text-lg text-tor">{money(total,lang)}</span></div>
+        <Btn cls="w-full" onClick={()=>{setOpen(false);nav('/checkout')}}>CHECKOUT</Btn></div>}
+    </aside>
+  </>);
+}
+
+/* ================= PAGES ================= */
+const Head=({e,t,d,tag,acc})=>(
+  <div className={cx('mb-8',acc)}>
+    <div className="flex items-center justify-between gap-3"><p className="eyebrow">{e}</p>{tag&&<Tag>{tag}</Tag>}</div>
+    <h1 className="mt-2 text-3xl font-bold tracking-tight text-white sm:text-4xl">{t}</h1>
+    <p className="mt-3 max-w-2xl text-sm leading-relaxed text-white/50">{d}</p>
+  </div>
+);
+
+function Node_(){
+  const{t,lang,sid}=useApp();
+  const[tick,setTick]=useState(0);
+  useEffect(()=>{const i=setInterval(()=>setTick(v=>v+1),2400);return()=>clearInterval(i)},[]);
+  const idx=[
+    {to:'/cash',n:'01',k:'cash',acc:'a-neon',ic:'M2 7h20v10H2zM6 12h.01M18 12h.01'},
+    {to:'/paypal',n:'02',k:'paypal',acc:'a-cyan',ic:'M6 4h8a4 4 0 0 1 0 8H8l-1 8H4z'},
+    {to:'/quality',n:'03',k:'quality',acc:'a-tor',ic:'M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20zM9.5 9a2.5 2.5 0 1 1 3.5 2.3c-.7.4-1 .9-1 1.7M12 17h.01'},
+    {to:'/feedback',n:'04',k:'reviews',acc:'a-amber',ic:'M12 3l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 18l-5.9 3 1.2-6.5L2.5 9.9 9.1 9z'},
+    {to:'/faq',n:'05',k:'faq',acc:'a-magenta',ic:'M4 4h16v16H4zM8 9h8M8 13h5'},
+  ];
+  const prot=['PGP SIGNED','NO LOGS','AES-256','TOR 3 HOPS','OFFSHORE'];
+  return (
+    <div className="mx-auto max-w-6xl px-4 pt-12">
+      {/* HERO asimmetrico */}
+      <div className="grid gap-5 lg:grid-cols-[1.35fr_1fr]">
+        <div className="card a-tor relative overflow-hidden p-7 sm:p-9">
+          <Brk/>
+          <div className="pointer-events-none absolute -top-28 -left-10 h-56 w-56 rounded-full opacity-40 blur-3xl" style={{background:'radial-gradient(circle,rgba(176,38,255,.5),transparent 70%)'}}/>
+          <div className="relative">
+            <div className="flex items-center gap-2"><span className="h-1.5 w-1.5 rounded-full bg-neon pulse"/><p className="mono text-[10px] tracking-[.3em] text-neon">{t('home.since')}</p></div>
+            <div className="mt-6 flex items-center gap-4">
+              <Logo s={64} cls="flt"/>
+              <div><p className="mono text-[10px] tracking-[.3em] text-tor">NODE://GUSTAVOEURO</p>
+                <p className="mono text-[10px] tracking-[.2em] text-white/35">ONION {ONION.slice(0,14)}…</p></div>
+            </div>
+            <h1 className="mt-7 text-2xl font-bold leading-snug tracking-tight text-white sm:text-[27px]">{t('home.tag')}</h1>
+            <p className="mt-4 text-sm leading-relaxed text-white/55">{t('home.sub')}</p>
+            <div className="mt-6 flex flex-wrap gap-2">{prot.map(p=><span key={p} className="badge">{p}</span>)}</div>
+          </div>
+        </div>
+
+        {/* terminale */}
+        <div className="card a-cyan relative overflow-hidden p-5">
+          <Brk/>
+          <div className="mb-3 flex items-center gap-2"><span className="h-1.5 w-1.5 rounded-full bg-cyan pulse"/><p className="mono text-[10px] tracking-[.3em] text-cyan">LIVE // SESSION</p></div>
+          <div className="space-y-2 mono text-[10px] leading-relaxed text-white/55">
+            <p><span className="text-cyan">›</span> node.status <span className="text-neon">ONLINE</span></p>
+            <p><span className="text-cyan">›</span> uptime.since <span className="text-white">{SINCE}</span></p>
+            <p><span className="text-cyan">›</span> circuit <span className="text-tor">3 HOPS OK</span></p>
+            <p><span className="text-cyan">›</span> encryption <span className="text-amber">AES-256-GCM</span></p>
+            <p><span className="text-cyan">›</span> logs <span className="text-magenta">PURGED 24H</span></p>
+            <p><span className="text-cyan">›</span> session <span className="text-white">{sid}</span></p>
+          </div>
+          <div className="mt-4 h-px bg-line"/>
+          <p className="mt-3 mono text-[9px] tracking-widest text-white/25">{t('home.trust')}</p>
+          <div className="mt-2 flex items-center gap-1.5">
+            {[0,1,2,3,4].map(i=><span key={i} className="h-1 flex-1 rounded-full" style={{background:i<=tick%6?'var(--neon)':'rgba(255,255,255,.08)',transition:'background .4s'}}/>)}
+          </div>
+        </div>
+      </div>
+
+      {/* INDICE verticale */}
+      <div className="mt-10">
+        <p className="eyebrow mb-4">{t('home.idx')}</p>
+        <ul className="stg space-y-2.5">
+          {idx.map(it=>(
+            <li key={it.to}>
+              <a href={'#'+it.to} className={cx('card card-i group flex items-center gap-5 p-5',it.acc)}>
+                <span className="mono text-2xl font-bold" style={{color:'rgba(var(--acc-rgb),.55)'}}>{it.n}</span>
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border" style={{borderColor:'rgba(var(--acc-rgb),.3)',color:'var(--acc)'}}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><path d={it.ic}/></svg>
+                </span>
+                <span className="flex-1">
+                  <span className="block font-bold tracking-tight text-white">{t('menu.cards.'+it.k+'.t')||t('nav.'+it.k)}</span>
+                  <span className="mt-0.5 block text-xs text-white/45">{it.k==='cash'?'Grade AAA+ // fibra cotone':it.k==='paypal'?'Routing P2P anonimo':it.k==='quality'?'Foto reali del material':it.k==='reviews'?'Registro su Telegram':'Protocolli e garanzie'}</span>
+                </span>
+                <span className="mono text-lg transition-transform group-hover:translate-x-1" style={{color:'var(--acc)'}}>→</span>
+              </a>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </div>
+  );
+}
+
+function Cash(){
+  const{t,lang,add,tm}=useApp();
+  const go=p=>{add({id:p.id,name:'BANCONOTE '+money(p.price,lang),sub:t('cash.prods.'+p.id)[0],unit:p.price,qty:1});tm('Aggiunto')};
+  return(<div className="mx-auto max-w-6xl px-4 pt-10 a-neon"><Back/>
+    <div className="mt-6"><Head e={t('cash.e')} t={t('cash.t')} d={t('cash.d')} tag={t('cash.tag')}/></div>
+    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      {CASH.map(p=>(<Card key={p.id} i cls="flex flex-col overflow-hidden">
+        <div className="-m-5 mb-4 overflow-hidden rounded-t-[13px] border-b border-line">
+          <Img srcs={BANK_SRC[p.id]} cls="aspect-[16/10] w-full object-cover" fb={money(p.price,lang)}/>
+        </div>
+        <div className="flex items-center justify-between"><span className="badge">{t('cash.prods.'+p.id)[0]}</span><span className="mono text-lg font-bold text-neon">{money(p.price,lang)}</span></div>
+        <p className="mt-2 text-xs leading-relaxed text-white/50">{t('cash.prods.'+p.id)[1]}</p>
+        <ul className="mt-3 space-y-1">{p.sp.map(s=><li key={s} className="mono flex items-center gap-2 text-[10px] text-white/40"><span className="text-neon">▸</span>{t('cash.specs.'+s)}</li>)}</ul>
+        <div className="mt-4 flex gap-2 border-t border-line pt-3"><Btn v="o" cls="flex-1" onClick={()=>go(p)}>Aggiungi</Btn><Btn cls="flex-1" onClick={()=>{go(p);nav('/checkout')}}>Acquista</Btn></div>
+      </Card>))}
+    </div></div>);
+}
+
+function Paypal(){
+  const{t,lang,add,tm}=useApp();
+  const go=p=>{add({id:p.id,name:'TRASFERIMENTO '+t('paypal.packs.'+p.id),sub:money(p.r,lang),unit:p.c,qty:1});tm('Aggiunto')};
+  return(<div className="mx-auto max-w-6xl px-4 pt-10 a-cyan"><Back/>
+    <div className="mt-6"><Head e={t('paypal.e')} t={t('paypal.t')} d={t('paypal.d')} tag={t('paypal.tag')}/></div>
+    <Card cls="mb-5"><div className="flex flex-wrap gap-3">
+      {[[t('paypal.liq'),t('paypal.on')+' ●'],[t('paypal.nodes'),'142'],[t('paypal.enc'),'RSA-4096']].map(([a,b],i)=>(
+        <div key={i} className="flex-1 rounded-lg border border-line/70 bg-black/30 p-3"><p className="mono text-[9px] tracking-[.16em] text-white/35">{a}</p><p className="mono mt-1 text-xs text-cyan">{b}</p></div>))}
+    </div></Card>
+    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      {PAYPAL.map(p=>(<Card key={p.id} i cls="flex flex-col">
+        <span className="badge w-fit">ETA 3.8s</span>
+        <h3 className="mt-3 font-bold text-white">TRASFERIMENTO {t('paypal.packs.'+p.id)}</h3>
+        <p className="mt-1 text-xs text-white/45">{t('paypal.sub',{a:p.r})}</p>
+        <div className="mt-4 grid grid-cols-2 gap-2 border-t border-line pt-3">
+          <div><p className="mono text-[9px] tracking-[.16em] text-white/35">{t('paypal.cost')}</p><p className="mono text-base font-bold text-white">{money(p.c,lang)}</p></div>
+          <div><p className="mono text-[9px] tracking-[.16em] text-white/35">{t('paypal.recv')}</p><p className="mono text-base font-bold text-cyan">{money(p.r,lang)}</p></div>
+        </div>
+        <div className="mt-4 flex gap-2"><Btn v="o" cls="flex-1" onClick={()=>go(p)}>Aggiungi</Btn><Btn cls="flex-1" onClick={()=>{go(p);nav('/checkout')}}>Acquista</Btn></div>
+      </Card>))}
+    </div></div>);
+}
+
+function Quality(){
+  const{t}=useApp();const[sel,setSel]=useState(null);
+  return(<div className="mx-auto max-w-4xl px-4 pt-10 a-tor"><Back/>
+    <div className="mt-6"><Head e={t('quality.e')} t={t('quality.t')} d={t('quality.d')} tag={t('quality.tag')}/></div>
+    <div className="grid gap-3 sm:grid-cols-2">
+      {[['cash','a-neon'],['paypal','a-cyan']].map(([s,a])=>(<button key={s} onClick={()=>setSel(s)} className={cx('card card-i p-4 text-left',a,sel===s&&'border-tor/60')}><p className="eyebrow">{t('nav.'+s)}</p><p className="mt-1 text-sm text-white/60">Apri galleria</p></button>))}
+    </div>
+    {sel&&<div className="stg mt-6 grid gap-3 sm:grid-cols-2">{[1,2,3,4].map(n=>(
+      <div key={n} className="card flex aspect-video flex-col items-center justify-center gap-2">
+        <p className="text-3xl" style={{color:'rgba(176,38,255,.5)'}}>◫</p>
+        <p className="mono text-[10px] tracking-widest text-white/35">{t('nav.'+sel)} #{n}</p></div>))}</div>}
+  </div>);
+}
+
+function Feedback(){
+  const{t}=useApp();
+  const[clicks,setClicks]=useState(0);
+  return(<div className="mx-auto max-w-3xl px-4 pt-10 a-amber"><Back/>
+    <div className="mt-6"><Head e={t('reviews.e')} t={t('reviews.t')} d={t('reviews.d')}/></div>
+    <Card cls="relative overflow-hidden p-7 text-center">
+      <Brk/>
+      <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full border border-amber/40 bg-amber/10">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#ffb000" strokeWidth="1.6"><path d="M21.9 4.3 18.6 20c-.2 1-.9 1.3-1.8.8l-4.9-3.6-2.4 2.3c-.3.3-.5.5-1 .5l.4-5 9.1-8.2c.4-.4-.1-.6-.6-.2L6.2 13.1 1.4 11.6c-1-.3-1-1 .2-1.5l19-7.3c.9-.3 1.6.2 1.3 1.5z"/></svg>
+      </div>
+      <p className="mono text-[10px] tracking-[.3em] text-amber">SYS://FEEDBACK.CHANNEL</p>
+      <h2 className="mt-3 text-xl font-bold text-white">{t('reviews.q')}</h2>
+      <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-white/50">{t('reviews.d')}</p>
+      <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-neon/30 bg-neon/5 px-4 py-1.5">
+        <span className="h-1.5 w-1.5 rounded-full bg-neon pulse"/><span className="mono text-[10px] tracking-widest text-neon">{t('reviews.stat')}</span>
+      </div>
+      <a href={TG_REVIEWS} target="_blank" rel="noreferrer" onClick={()=>setClicks(c=>c+1)} className="mt-6 block">
+        <Btn cls="w-full">{t('reviews.cta')}</Btn>
+      </a>
+      <p className="mt-3 mono text-[9px] tracking-widest text-white/25">t.me/+gBf54xWnFapjMmRh</p>
+      {clicks>0&&<p className="mt-2 mono text-[10px] text-amber">› canale aperto · resta su Telegram per leggere tutto</p>}
+    </Card>
+  </div>);
+}
+
+function Faq(){
+  const{t}=useApp();const[o,setO]=useState(null);const q=['q1','q2','q3','q4','q5','q6'];
+  return(<div className="mx-auto max-w-3xl px-4 pt-10 a-magenta"><Back/>
+    <div className="mt-6"><Head e={t('faq.e')} t={t('faq.t')} d={t('faq.d')} tag={t('faq.tag')}/></div>
+    <Card cls="mb-4 a-neon"><div className="flex items-center gap-2"><span className="h-1.5 w-1.5 rounded-full bg-neon pulse"/><p className="mono text-xs tracking-[.16em] text-neon">{t('faq.sec')}</p></div><p className="mono mt-1 text-[10px] text-white/40">{t('faq.secS')}</p></Card>
+    <div className="space-y-2">{q.map(k=>(<div key={k} className="card overflow-hidden">
+      <button onClick={()=>setO(o===k?null:k)} className="flex w-full items-center justify-between px-5 py-4 text-left"><span className="text-sm text-white">{t('faq.'+k)[0]}</span><span className={cx('text-magenta transition-transform',o===k&&'rotate-45')}>+</span></button>
+      <div className="grid transition-all duration-300" style={{gridTemplateRows:o===k?'1fr':'0fr'}}><div className="overflow-hidden"><p className="px-5 pb-4 text-sm leading-relaxed text-white/50">{t('faq.'+k)[1]}</p></div></div>
+    </div>))}</div>
+    <Card cls="mt-4"><p className="eyebrow">{t('faq.prot')}</p><ul className="mt-3 space-y-1.5">{t('faq.protList').map(p=><li key={p} className="flex items-center gap-2 text-xs text-white/50"><span className="text-magenta">✓</span>{p}</li>)}</ul></Card>
+  </div>);
+}
+
+function Legal({doc}){
+  const{t}=useApp();const d=t('legal.'+doc);
+  const acc={privacy:'a-tor',terms:'a-amber',cookies:'a-cyan'}[doc];
+  return(<div className={cx('mx-auto max-w-3xl px-4 pt-10',acc)}><Back/>
+    <h1 className="mt-6 text-3xl font-bold text-white">{d.t}</h1><p className="mt-2 text-xs italic text-white/40">{d.u}</p>
+    <div className="mt-8 space-y-6">{d.s.map((s,i)=>(<section key={i}><h2 className="mono text-xs tracking-[.16em]" style={{color:'var(--acc)'}}>{s[0]}</h2><p className="mt-2 text-sm leading-relaxed text-white/50">{s[1]}</p></section>))}</div>
+  </div>);
+}
+
+function Checkout(){
+  const{t,lang,items,total,order,setOrder,tm,clear}=useApp();
+  const[step,setStep]=useState(0),[sub,setSub]=useState(null),[code,setCode]=useState(''),[err,setErr]=useState('');
+  const s=order.sh;const setS=p=>setOrder(o=>({...o,sh:{...o.sh,...p}}));
+  const fin=order.method==='bonifico'?total*1.1:order.method==='amazon'?total*1.2:total;
+  const confirm=()=>{const c=oid();setCode(c);
+    const msg=['🟡 ORDINE GUSTAVOEURO','',...items.map(i=>`• ${i.name} × ${i.qty} = ${money(i.unit*i.qty,lang)}`),'',`TOTALE ${money(fin,lang)}`,`METODO ${order.method}`,'',`${s.addr} ${s.num}, ${s.zip} ${s.city}`,`${s.email} | ${s.pre} ${s.phone}`,`Corriere ${s.cour} ${s.locker}`,'',`CODICE ${c}`].join('\n');
+    if(navigator.clipboard)navigator.clipboard.writeText(msg).catch(()=>{});setStep(3)};
+  if(items.length===0&&step<3)return(<div className="mx-auto max-w-2xl px-4 pt-10 a-tor"><Back/><Card cls="mt-6 text-center"><p className="mono text-sm text-white/60">Carrello vuoto</p><div className="mt-4 flex justify-center gap-2"><a href="#/cash"><Btn v="o">Banconote</Btn></a><a href="#/paypal"><Btn>Trasferimenti</Btn></a></div></Card></div>);
+  const sm={'POSTE ITALIANE':'p','BRT':'b','GLS':'g','DHL':'d','LOCKER INPOST':'l'};
+  return(<div className="mx-auto max-w-3xl px-4 pt-6 a-tor">
+    <div className="mb-4 flex items-center justify-between"><Back to="/node"/><span className="mono flex items-center gap-1.5 text-[10px] tracking-[.2em] text-neon"><span className="h-1.5 w-1.5 rounded-full bg-neon pulse"/>{t('checkout.sec')}</span></div>
+    <div className="mb-5 flex items-center gap-2">{t('checkout.steps').map((st,i)=>(
+      <div key={st} className="flex flex-1 items-center gap-2">
+        <div className={cx('flex h-6 w-6 items-center justify-center rounded-full mono text-[10px]',i<=step?'bg-tor text-black':'border border-line text-white/35')}>{i+1}</div>
+        <span className={cx('mono hidden text-[9px] tracking-widest sm:inline',i<=step?'text-tor':'text-white/30')}>{st}</span>
+        {i<3&&<div className={cx('h-px flex-1',i<step?'bg-tor/50':'bg-line')}/>}
+      </div>))}</div>
+
+    {step===0&&<Card cls="relative text-center"><Brk/>
+      <h1 className="text-xl font-bold text-white">{t('checkout.g.0')}</h1><p className="mono mt-2 text-[10px] tracking-widest text-white/40">{t('checkout.g.1')}</p>
+      <div className="mt-5 space-y-3"><Btn cls="w-full" onClick={()=>setStep(1)}>{t('checkout.g.2')}</Btn>
+      <a href={isMob()&&/Android/i.test(navigator.userAgent)?'https://play.google.com/store/apps/details?id=org.telegram.messenger':'https://apps.apple.com/app/telegram-messenger/id686449807'} target="_blank" rel="noreferrer"><Btn v="o" cls="w-full">{t('checkout.g.3')}</Btn></a></div>
+    </Card>}
+
+    {step===1&&<div className="space-y-4">
+      <Card><p className="eyebrow">{t('checkout.sum')}</p>
+        <div className="mt-3 space-y-2">{items.map(i=><div key={i.id} className="flex justify-between text-sm"><span className="text-white/60">{i.name} × {i.qty}</span><span className="mono text-white">{money(i.unit*i.qty,lang)}</span></div>)}</div>
+        <div className="mt-3 flex justify-between border-t border-line pt-3"><span className="mono text-xs uppercase tracking-widest text-white/50">{t('checkout.tot')}</span><span className="mono text-lg text-tor">{money(total,lang)}</span></div></Card>
+      <Card><h2 className="font-bold text-white">{t('checkout.s1')}</h2>
+        <div className="mt-4 space-y-3">
+          <div><label className="mono text-[10px] tracking-widest text-white/40">{t('checkout.addr')}</label>
+            <div className="mt-1 grid grid-cols-3 gap-2"><input className="inp col-span-2" placeholder={t('checkout.street')} value={s.addr} onChange={e=>setS({addr:e.target.value})}/><input className="inp" placeholder={t('checkout.num')} value={s.num} onChange={e=>setS({num:e.target.value})}/></div></div>
+          <div className="grid grid-cols-3 gap-2"><input className="inp" placeholder={t('checkout.zip')} value={s.zip} onChange={e=>setS({zip:e.target.value})}/><input className="inp col-span-2" placeholder={t('checkout.city')} value={s.city} onChange={e=>setS({city:e.target.value})}/></div>
+          <div><label className="mono text-[10px] tracking-widest text-white/40">{t('checkout.cont')}</label>
+            <div className="mt-1 space-y-2"><input className="inp" placeholder={t('checkout.email')} value={s.email} onChange={e=>setS({email:e.target.value})}/>
+            <div className="flex gap-2"><select className="inp w-24" value={s.pre} onChange={e=>setS({pre:e.target.value})}>{PREFIXES.map(p=><option key={p}>{p}</option>)}</select><input className="inp" placeholder={t('checkout.phone')} value={s.phone} onChange={e=>setS({phone:e.target.value})}/></div></div></div>
+          <div><p className="mono text-[10px] tracking-widest text-white/40">{t('checkout.cour')}</p>
+            <div className="mt-2 grid gap-2 sm:grid-cols-2">{SHIPPERS.map(c=><button key={c} onClick={()=>setS({cour:c})} className={cx('rounded-lg border p-3 text-left transition-all',s.cour===c?'border-tor/70 bg-tor/10':'border-line hover:border-white/30')}><p className="mono text-xs text-white">{c}</p><p className="mono text-[9px] text-white/35">{t('checkout.sh.'+sm[c])[0]} · {t('checkout.sh.'+sm[c])[1]}</p></button>)}</div>
+            {s.cour==='LOCKER INPOST'&&<input className="inp mt-2" placeholder={t('checkout.locker')} value={s.locker} onChange={e=>setS({locker:e.target.value})}/>}</div>
+        </div>
+        {err&&<p className="mono mt-3 text-xs text-magenta">{err}</p>}
+        <Btn cls="mt-4 w-full" onClick={()=>{if(!s.addr||!s.num||!s.zip||!s.city||!s.email||!s.phone||!s.cour){setErr(t('checkout.fill'));return}setErr('');setStep(2)}}>{t('checkout.go')}</Btn></Card>
+    </div>}
+
+    {step===2&&<div className="space-y-4">
+      <Card><h2 className="font-bold text-white">{t('checkout.s2')}</h2><p className="mono text-[10px] tracking-widest text-white/40">{t('checkout.sub2')}</p>
+        <div className="mt-4 space-y-3">
+          <button onClick={()=>{setOrder(o=>({...o,method:'crypto'}));setSub('cq')}} className={cx('w-full rounded-xl border p-4 text-left transition-all',order.method==='crypto'?'border-cyan/70 bg-cyan/10':'border-line hover:border-white/30')}>
+            <div className="flex items-center justify-between"><span className="mono text-sm text-white">{t('checkout.crypto')}</span><span className="badge">{t('checkout.nofee')}</span></div>
+            <p className="mono mt-1 text-[10px] text-white/40">{t('checkout.csub')}</p><p className="mono mt-1 text-[9px] text-cyan">{t('checkout.cbadge')}</p></button>
+          <button onClick={()=>{setOrder(o=>({...o,method:'bonifico'}));setSub('bon')}} className={cx('w-full rounded-xl border p-4 text-left transition-all',order.method==='bonifico'?'border-tor/70 bg-tor/10':'border-line hover:border-white/30')}>
+            <div className="flex items-center justify-between"><span className="mono text-sm text-white">{t('checkout.bon')}</span><span className="badge">{t('checkout.bfee')}</span></div>
+            <p className="mono mt-1 text-[10px] text-white/40">{t('checkout.bsub')}</p></button>
+          <button onClick={()=>{setOrder(o=>({...o,method:'amazon'}));setSub('aq')}} className={cx('w-full rounded-xl border p-4 text-left transition-all',order.method==='amazon'?'border-amber/70 bg-amber/10':'border-line hover:border-white/30')}>
+            <div className="flex items-center justify-between"><span className="mono text-sm text-white">{t('checkout.amz')}</span><span className="badge">{t('checkout.afee')}</span></div>
+            <p className="mono mt-1 text-[10px] text-white/40">{t('checkout.asub')}</p></button>
+        </div></Card>
+      {sub==='cq'&&<Card><h3 className="font-bold text-white">{t('checkout.cq.0')}</h3><p className="mono text-[10px] tracking-widest text-white/40">{t('checkout.cq.1')}</p><div className="mt-3 flex gap-2"><Btn cls="flex-1" onClick={()=>setSub('conf')}>{t('checkout.cq.2')}</Btn><Btn v="o" cls="flex-1" onClick={()=>setSub('cg')}>{t('checkout.cq.3')}</Btn></div></Card>}
+      {sub==='cg'&&<Card><h3 className="font-bold text-white">{t('checkout.cg.0')}</h3><ol className="mt-3 space-y-2">{t('checkout.cg').slice(1,5).map((x,i)=><li key={i} className="flex gap-2 text-sm text-white/60"><span className="mono text-cyan">{i+1}.</span>{x}</li>)}</ol><Btn cls="mt-4 w-full" onClick={()=>setSub('conf')}>{t('checkout.cg.5')}</Btn></Card>}
+      {sub==='aq'&&<Card><h3 className="font-bold text-white">{t('checkout.aq.0')}</h3><p className="mono text-[10px] tracking-widest text-white/40">{t('checkout.aq.1')}</p><div className="mt-3 flex gap-2"><Btn cls="flex-1" onClick={()=>setSub('conf')}>{t('checkout.aq.2')}</Btn><Btn v="o" cls="flex-1" onClick={()=>setSub('ag')}>{t('checkout.aq.3')}</Btn></div></Card>}
+      {sub==='ag'&&<Card><h3 className="font-bold text-white">{t('checkout.ag.0')}</h3><p className="mt-2 text-sm text-white/55">{t('checkout.ag.1')}</p><p className="mono mt-2 text-[10px] text-amber">{t('checkout.ag.2')}</p><Btn cls="mt-4 w-full" onClick={()=>setSub('conf')}>{t('checkout.ag.3')}</Btn></Card>}
+      {sub==='bon'&&<Card><h3 className="font-bold text-white">{t('checkout.bon')}</h3><p className="mt-2 text-sm text-white/55">{t('checkout.bfee')} · SEPA</p><Btn cls="mt-4 w-full" onClick={()=>setSub('conf')}>OK</Btn></Card>}
+      {sub==='conf'&&<Card>
+        <h3 className="font-bold text-white">{t('checkout.conf')}</h3><p className="mono text-[10px] tracking-widest text-white/40">{t('checkout.rate')}</p>
+        {order.method==='crypto'&&<div className="mt-3"><p className="mono text-[10px] tracking-widest text-white/40">{t('checkout.net')}</p>
+          <div className="mt-2 flex gap-2">{['USDT','BTC','LTC'].map(n=><button key={n} onClick={()=>setOrder(o=>({...o,coin:n}))} className={cx('flex-1 rounded-lg border p-3 mono text-xs',order.coin===n?'border-cyan/70 bg-cyan/10 text-cyan':'border-line text-white/60')}>{n}</button>)}</div>
+          {order.coin&&<div className="mt-3 rounded-lg border border-line bg-black/40 p-3"><p className="mono text-[9px] tracking-widest text-white/40">{t('checkout.send')}</p><p className="mono break-all text-xs text-cyan">{WALLETS[order.coin]}</p>
+            <button onClick={async()=>{await cp(WALLETS[order.coin]);tm('Copiato')}} className="mono mt-2 text-[10px] uppercase tracking-widest text-white/45 hover:text-cyan">{t('c.copy')}</button></div>}</div>}
+        {order.method==='amazon'&&<div className="mt-3"><p className="mono text-[10px] tracking-widest text-white/40">CODICE BUONO</p><input className="inp mt-2" placeholder="XXXX-XXXX-XXXX-XXX" onChange={e=>setOrder(o=>({...o,voucher:e.target.value.toUpperCase()}))}/></div>}
+        <div className="mt-4 space-y-1 border-t border-line pt-3">
+          <div className="flex justify-between text-sm"><span className="text-white/50">{t('checkout.sub')}</span><span className="mono text-white">{money(total,lang)}</span></div>
+          {order.method==='bonifico'&&<div className="flex justify-between text-sm"><span className="text-white/50">{t('checkout.bfeeL')}</span><span className="mono text-white">+{money(total*.1,lang)}</span></div>}
+          {order.method==='amazon'&&<div className="flex justify-between text-sm"><span className="text-white/50">{t('checkout.vfeeL')}</span><span className="mono text-white">+{money(total*.2,lang)}</span></div>}
+          <div className="flex justify-between pt-2"><span className="mono text-xs uppercase tracking-widest text-white/50">{t('checkout.pay')}</span><span className="mono text-lg font-bold text-neon">{money(fin,lang)}</span></div>
+        </div>
+        <Btn cls="mt-4 w-full" onClick={confirm}>{t('checkout.conf')}</Btn>
+      </Card>}
+    </div>}
+
+    {step===3&&<Card cls="relative text-center"><Brk/>
+      <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-neon/15 text-2xl text-neon">✓</div>
+      <h1 className="text-xl font-bold text-white">{t('checkout.done')}</h1><p className="mono text-[10px] tracking-widest text-white/40">{t('checkout.doneS')}</p>
+      <div className="mt-4 rounded-xl border border-neon/30 bg-neon/5 p-4"><p className="mono text-[10px] tracking-widest text-white/40">{t('checkout.code')}</p><p className="mono mt-1 text-2xl font-bold tracking-widest text-neon">{code}</p>
+        <button onClick={async()=>{await cp(code);tm('Copiato')}} className="mono mt-2 text-[10px] uppercase tracking-widest text-white/45 hover:text-neon">{t('checkout.cc')}</button></div>
+      <p className="mono mt-4 text-[10px] tracking-widest text-white/40">{t('checkout.wait')}</p>
+      <div className="mt-4 flex flex-wrap justify-center gap-2"><a href={TG} target="_blank" rel="noreferrer"><Btn>{t('checkout.ct')}</Btn></a><Btn v="o" onClick={()=>{clear();nav('/node')}}>{t('checkout.back')}</Btn></div>
+      <p className="mt-4 text-xs text-white/45">{t('checkout.warn')}</p>
+    </Card>}
+  </div>);
+}
+
+/* ================= APP ================= */
+function Router(){
+  const p=useRoute();const seg=p.split('/').filter(Boolean);const r=seg[0];
+  if(!r)return <Boot/>;
+  if(r==='gate')return <Gate/>;
+  if(!sessionStorage.getItem('ge-in')&&r!=='gate'){ /* forza gate se non autenticato */ }
+  let page;
+  if(r==='node')page=<Node_/>;
+  else if(r==='cash')page=<Cash/>;
+  else if(r==='paypal')page=<Paypal/>;
+  else if(r==='quality')page=<Quality/>;
+  else if(r==='feedback')page=<Feedback/>;
+  else if(r==='faq')page=<Faq/>;
+  else if(r==='privacy'||r==='terms'||r==='cookies')page=<Legal doc={r}/>;
+  else if(r==='checkout')page=<Checkout/>;
+  else page=<Node_/>;
+  return(<><Header/>{page}<Footer/><Cart/></>);
+}
+function Toast(){const{toast}=useApp();if(!toast)return null;
+  return <div className="pop fixed bottom-6 left-1/2 z-[100] -translate-x-1/2 rounded-full border border-tor/50 bg-surface/95 px-5 py-2.5 mono text-[11px] uppercase tracking-widest text-tor backdrop-blur-xl">{toast}</div>}
+function Fab(){return <a href={TG} target="_blank" rel="noreferrer" aria-label="Telegram" className="fixed bottom-6 right-5 z-[80] flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-tor to-cyan text-black shadow-[0_10px_34px_-8px_rgba(176,38,255,.9)] transition-transform hover:scale-105"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M21.9 4.3 18.6 20c-.2 1-.9 1.3-1.8.8l-4.9-3.6-2.4 2.3c-.3.3-.5.5-1 .5l.4-5 9.1-8.2c.4-.4-.1-.6-.6-.2L6.2 13.1 1.4 11.6c-1-.3-1-1 .2-1.5l19-7.3c.9-.3 1.6.2 1.3 1.5z"/></svg></a>}
+function App(){return(<Prov><Router/><Toast/><Fab/></Prov>)}
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>
